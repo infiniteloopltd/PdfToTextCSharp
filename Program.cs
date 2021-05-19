@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
@@ -28,14 +29,27 @@ namespace PDFExtract
             var iPageList = Enumerable.Range(1, pdfDocument.GetNumberOfPages());
             var allText = "";
      
-
+            // Works
             foreach (var pageNumber in iPageList)
-           {
+            {
                var page = pdfDocument.GetPage(pageNumber);
                string text = PdfTextExtractor.GetTextFromPage(page, strategy);
                string processed = Encoding.UTF8.GetString(Encoding.Convert(Encoding.Default, Encoding.UTF8, Encoding.Default.GetBytes(text)));
                allText += processed;
-           }
+            }
+
+            // Doesn't work
+            // Error: Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')'
+            Parallel.ForEach(iPageList, pageNumber =>
+            {
+                var page = pdfDocument.GetPage(pageNumber);
+                string text = PdfTextExtractor.GetTextFromPage(page, strategy);
+                string processed = Encoding.UTF8.GetString(Encoding.Convert(Encoding.Default, Encoding.UTF8,
+                    Encoding.Default.GetBytes(text)));
+                allText += processed;
+            });
+
+
 
             var elapsed = DateTime.Now - ts;
             Console.WriteLine("seconds" + +elapsed.TotalSeconds); // 7 seconds
