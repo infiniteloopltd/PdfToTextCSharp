@@ -20,17 +20,19 @@ namespace PDFExtract
             var data = webClient.DownloadData(url);
             Console.WriteLine("Downloaded");
 
-            
+            var ts = DateTime.Now;
+            var doc = new FastPDFDocument(data);
+            var pages = doc.Find("YORKE");
+
 
             var memoryStream = new MemoryStream(data);
             var pdfDocument = new PdfDocument(new PdfReader(memoryStream));
             var strategy = new LocationTextExtractionStrategy();
-            var ts = DateTime.Now;
-            var iPageList = Enumerable.Range(1, pdfDocument.GetNumberOfPages());
+           
             var allText = "";
      
             // Works
-            foreach (var pageNumber in iPageList)
+            foreach (var pageNumber in pages.Select(p => p.PageNumber))
             {
                var page = pdfDocument.GetPage(pageNumber);
                string text = PdfTextExtractor.GetTextFromPage(page, strategy);
@@ -38,21 +40,8 @@ namespace PDFExtract
                allText += processed;
             }
 
-            // Doesn't work
-            // Error: Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')'
-            Parallel.ForEach(iPageList, pageNumber =>
-            {
-                var page = pdfDocument.GetPage(pageNumber);
-                string text = PdfTextExtractor.GetTextFromPage(page, strategy);
-                string processed = Encoding.UTF8.GetString(Encoding.Convert(Encoding.Default, Encoding.UTF8,
-                    Encoding.Default.GetBytes(text)));
-                allText += processed;
-            });
-
-
-
             var elapsed = DateTime.Now - ts;
-            Console.WriteLine("seconds" + +elapsed.TotalSeconds); // 7 seconds
+            Console.WriteLine("seconds" + +elapsed.TotalSeconds); // 7 seconds down to 1.1 seconds !
             pdfDocument.Close();
         }
     }
